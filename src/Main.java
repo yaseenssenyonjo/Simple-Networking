@@ -1,3 +1,4 @@
+import examples.EchoServer;
 import net.Client;
 import net.Server;
 import net.traits.IClientListener;
@@ -11,47 +12,14 @@ public class Main
 {
     public static void main(String[] args) throws IOException
     {
-        StartEchoServer(1000);
+        EchoServer.CreateServer(1000);
         ConnectClient("127.0.0.1", 1000);
-        
+
         while (true)
         {
             BufferedReader in = new BufferedReader(new InputStreamReader(System.in));
             in.readLine();
         }
-    }
-
-    private static void StartEchoServer(int port)
-    {
-        Server server = new Server(port);
-        server.AddListener(new IServerListener()
-        {
-            @Override
-            public void ConnectionEstablished(Client client)
-            {
-                System.out.println("A client has connected!");
-            }
-
-            @Override
-            public void DataReceived(Client client, String data)
-            {
-                System.out.printf("A client has sent data! - '%s'\n", data);
-                client.Write(data);
-            }
-
-            @Override
-            public void Disconnected()
-            {
-                System.out.println("A client has disconnected!");
-            }
-
-            @Override
-            public void Error(String message)
-            {
-                System.out.println("An error has occurred during an operation!");
-            }
-        });
-        server.Start();
     }
 
     private static void ConnectClient(String host, int port)

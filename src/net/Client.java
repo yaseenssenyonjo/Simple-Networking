@@ -10,11 +10,23 @@ import java.nio.channels.CompletionHandler;
 import java.util.ArrayList;
 import java.util.List;
 
+/**
+ * Represents an asynchronous client.
+ */
 public class Client
 {
+    /**
+     * The underlying client socket.
+     */
     private AsynchronousSocketChannel _clientSocket;
+    /**
+     * The listeners.
+     */
     private List<IClientListener> _listeners = new ArrayList<>();
 
+    /**
+     * Initialises a new instance of the Client class.
+     */
     public Client()
     {
         try
@@ -28,7 +40,11 @@ public class Client
         }
     }
 
-    private Client(AsynchronousSocketChannel socket)
+    /**
+     * Initialises a new instance of the Server class using the specified socket.
+     * @param socket The socket to use for IO operations.
+     */
+    Client(AsynchronousSocketChannel socket)
     {
         _clientSocket = socket;
         Read();
@@ -70,6 +86,10 @@ public class Client
         });
     }
 
+    /**
+     * Writes the specified data asynchronously.
+     * @param data The data to write.
+     */
     public void Write(String data)
     {
         // Convert the data into bytes.
@@ -100,6 +120,9 @@ public class Client
         });
     }
 
+    /**
+     * Closes the connection.
+     */
     public void Close()
     {
         try
@@ -113,6 +136,9 @@ public class Client
         }
     }
 
+    /**
+     * Begins to asynchronously read data.
+     */
     private void Read()
     {
         final ByteBuffer readBuffer = ByteBuffer.allocate(1024);

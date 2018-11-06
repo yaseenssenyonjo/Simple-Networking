@@ -3,7 +3,7 @@ package net.traits;
 import net.Client;
 
 /**
- * Represents a listener to the server.
+ * Represents a listener for a server.
  */
 public interface IServerListener
 {

@@ -11,13 +11,15 @@ import java.nio.channels.CompletionHandler;
 import java.util.ArrayList;
 import java.util.List;
 
+/**
+ * Represents an asynchronous server.
+ */
 public class Server
 {
     /**
      * The underlying server socket.
      */
     private AsynchronousServerSocketChannel _serverSocket;
-
     /**
      * The listeners.
      */

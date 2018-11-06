@@ -2,6 +2,9 @@ package net.traits;
 
 import net.Client;
 
+/**
+ * Represents a listener for a client.
+ */
 public interface IClientListener
 {
     /**

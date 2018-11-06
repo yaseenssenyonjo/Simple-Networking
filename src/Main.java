@@ -13,8 +13,7 @@ public class Main
     {
         StartEchoServer(1000);
         ConnectClient("127.0.0.1", 1000);
-
-
+        
         while (true)
         {
             BufferedReader in = new BufferedReader(new InputStreamReader(System.in));

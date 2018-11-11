@@ -1,25 +1,25 @@
 package examples;
 
-import net.Client;
-import net.Server;
+import net.tcp.TcpClient;
+import net.tcp.TcpServer;
 import net.traits.IServerListener;
 
 public class EchoServer
 {
-    public static void CreateServer(int port)
+    public static void CreateTcpServer(int port)
     {
-        Server server = new Server(port);
+        TcpServer tcpServer = new TcpServer(port);
 
-        server.AddListener(new IServerListener()
+        tcpServer.AddListener(new IServerListener<>()
         {
             @Override
-            public void ConnectionEstablished(Client client)
+            public void ConnectionEstablished(TcpClient client)
             {
                 System.out.println("A client has connected!");
             }
 
             @Override
-            public void DataReceived(Client client, String data)
+            public void DataReceived(TcpClient client, String data)
             {
                 System.out.printf("A client has sent data! - '%s'\n", data);
                 client.Write(data); // Echo the data.
@@ -38,6 +38,6 @@ public class EchoServer
             }
         });
 
-        server.Start();
+        tcpServer.Start();
     }
 }

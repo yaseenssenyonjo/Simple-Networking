@@ -1,24 +1,30 @@
 # Simple Networking
-Simple Networking is a Java library that simplifies asynchronous networking by abstracting the default libraries.
+Simple Networking is a Java library that **simplifies asynchronous networking** by abstracting the default libraries.
 
 ## TODO
- * Add UDP support in terms of the server and client.
+ * Add UDP support in terms of the tcpServer and client.
 
 ## Usage
-### Creating a simple TCP echo server.
+### Creating a simple TCP echo tcpServer.
 ```java
-Server server = new Server(port);
+import net.tcp.TcpClient;
+import net.tcp.TcpServer;
+import net.traits.ITcpServerListener;
+
+int port = 1000;
+
+TcpServer tcpServer = new TcpServer(port);
         
-server.AddListener(new IServerListener()
+tcpServer.AddListener(new ITcpServerListener()
 {
     @Override
-    public void ConnectionEstablished(Client client)
+    public void ConnectionEstablished(TcpClient client)
     {
         System.out.println("A client has connected!");
     }
 
     @Override
-    public void DataReceived(Client client, String data)
+    public void DataReceived(TcpClient client, String data)
     {
         System.out.printf("A client has sent data! - '%s'\n", data);
         client.Write(data); // Echo the data.
@@ -37,14 +43,20 @@ server.AddListener(new IServerListener()
     }
 });
 
-server.Start();
+tcpServer.Start();
 ```
 
 ### Creating a simple TCP echo client.
 ```java
-Client client = new Client();
+import net.tcp.TcpClient;
+import net.traits.ITcpClientListener;
 
-client.AddListener(new IClientListener()
+String host = "127.0.0.1";
+int port = 1000;
+
+TcpClient client = new TcpClient();
+
+client.AddListener(new ITcpClientListener()
 {
     @Override
     public void ConnectionEstablished()
@@ -53,9 +65,9 @@ client.AddListener(new IClientListener()
     }
 
     @Override
-    public void DataReceived(Client client, String data)
+    public void DataReceived(TcpClient client, String data)
     {
-        System.out.printf("The server has sent data! - '%s'\n", data);
+        System.out.printf("The tcpServer has sent data! - '%s'\n", data);
         client.Write(data); // Echo the data received.
     }
 

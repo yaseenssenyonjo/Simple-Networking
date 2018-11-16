@@ -8,6 +8,7 @@ import java.nio.ByteBuffer;
 import java.nio.channels.DatagramChannel;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.CompletableFuture;
 
 /**
  * Represents a udp client.
@@ -18,10 +19,6 @@ public class UdpClient
      * The underlying client socket.
      */
     private DatagramChannel _clientSocket;
-    /**
-     * The remote host.
-     */
-    private InetSocketAddress _remoteHost;
     /**
      * The listeners.
      */
@@ -51,16 +48,7 @@ public class UdpClient
     UdpClient(DatagramChannel socket)
     {
         _clientSocket = socket;
-
-        try
-        {
-            _clientSocket.configureBlocking(false);
-        } catch (IOException exc)
-        {
-            // It's not possible to alert listeners as this is during initialisation.
-            System.out.println(exc.getMessage());
-        }
-        // Read(); // todo: consider using threading with it trying to read constantly in a while loop.
+        Read();
     }
 
     /**
@@ -73,97 +61,130 @@ public class UdpClient
         _listeners.add(listener);
     }
 
+    /**
+     * Begins an asynchronous request for a remote connection.
+     *
+     * @param host The host.
+     * @param port The port.
+     */
     public void Connect(String host, int port)
     {
-        _remoteHost = new InetSocketAddress(host, port);
-
-        try
+        CompletableFuture.runAsync(() ->
         {
-            _clientSocket.connect(_remoteHost);
-        } catch (IOException e)
-        {
-            String errorMessage = e.getMessage();
-            if (errorMessage != null) for (var listener : _listeners) listener.Error(errorMessage);
-        }
+            try
+            {
+                _clientSocket.connect(new InetSocketAddress(host, port));
+                for (var listener : _listeners) listener.ConnectionEstablished();
+                Read();
+            } catch (IOException e)
+            {
+                String errorMessage = e.getMessage();
+                if (errorMessage != null) for (var listener : _listeners) listener.Error(errorMessage);
+            }
+        });
     }
 
+    /**
+     * Writes the specified data asynchronously.
+     *
+     * @param data The data to write.
+     */
     public void Write(String data)
     {
-        // Convert the data into bytes.
-        byte[] dataBytes = data.getBytes();
-
-        // Allocate a buffer.
-        ByteBuffer writeBuffer = ByteBuffer.allocate(dataBytes.length);
-
-        // Transfer the data into the buffer.
-        writeBuffer.put(dataBytes);
-
-        // Sets the limit to the current position.
-        // Sets the read head position to zero.
-        writeBuffer.flip();
-
-        // Write the data.
-        try
+        CompletableFuture.runAsync(() ->
         {
-            _clientSocket.send(writeBuffer, _remoteHost);
-        } catch (IOException e)
-        {
-            String errorMessage = e.getMessage();
-            if (errorMessage != null) for (var listener : _listeners) listener.Error(errorMessage);
-        }
+            // Convert the data into bytes.
+            byte[] dataBytes = data.getBytes();
+
+            // Allocate a buffer.
+            ByteBuffer writeBuffer = ByteBuffer.allocate(dataBytes.length);
+
+            // Transfer the data into the buffer.
+            writeBuffer.put(dataBytes);
+
+            // Sets the limit to the current position.
+            // Sets the read head position to zero.
+            writeBuffer.flip();
+
+            // Write the data.
+            try
+            {
+                _clientSocket.write(writeBuffer);
+            } catch (IOException e)
+            {
+                String errorMessage = e.getMessage();
+                if (errorMessage != null) for (var listener : _listeners) listener.Error(errorMessage);
+            }
+        });
     }
 
+    /**
+     * Closes the connection.
+     */
     public void Close()
     {
-        try
+        CompletableFuture.runAsync(() ->
         {
-            _clientSocket.close();
-        } catch (IOException e)
-        {
-            String errorMessage = e.getMessage();
-            if (errorMessage != null) for (var listener : _listeners) listener.Error(errorMessage);
-        }
+            try
+            {
+                _clientSocket.close();
+            } catch (IOException e)
+            {
+                String errorMessage = e.getMessage();
+                if (errorMessage != null) for (var listener : _listeners) listener.Error(errorMessage);
+            }
+        });
     }
 
+    /**
+     * Begins to asynchronously read data.
+     */
     private void Read()
     {
-        final ByteBuffer readBuffer = ByteBuffer.allocate(1024);
-        int numberOfBytesRead;
-
-        try
+        CompletableFuture.runAsync(() ->
         {
-            numberOfBytesRead = _clientSocket.read(readBuffer);
-        } catch (IOException e)
-        {
-            String errorMessage = e.getMessage();
-            if (errorMessage != null) for (var listener : _listeners) listener.Error(errorMessage);
-            return;
-        }
+            // Continuously attempt to read data until no longer connected.
+            while(true)
+            {
+                final ByteBuffer readBuffer = ByteBuffer.allocate(1024);
+                int numberOfBytesRead;
 
-        // There was no data received - disconnected.
-        if (numberOfBytesRead == -1)
-        {
-            // Notify the listeners.
-            for (var listener : _listeners) listener.Disconnected();
-            return;
-        }
+                try
+                {
+                    numberOfBytesRead = _clientSocket.read(readBuffer);
+                } catch (IOException e)
+                {
+                    String errorMessage = e.getMessage();
+                    if (errorMessage != null) for (var listener : _listeners) listener.Error(errorMessage);
+                    break;
+                }
 
-        // Sets the limit to the current position.
-        // Sets the read head position to zero.
-        readBuffer.flip();
+                // There was no data received - disconnected.
+                if (numberOfBytesRead == -1)
+                {
+                    // Notify the listeners.
+                    for (var listener : _listeners) listener.Disconnected();
+                    break;
+                }
 
-        byte[] receiveBytes = new byte[numberOfBytesRead];
+                // Sets the limit to the current position.
+                // Sets the read head position to zero.
+                readBuffer.flip();
 
-        // Transfers the data in the buffer to byte array.
-        readBuffer.get(receiveBytes);
+                byte[] receiveBytes = new byte[numberOfBytesRead];
 
-        // Convert byte array into a string.
-        String dataString = new String(receiveBytes);
+                // Transfers the data in the buffer to byte array.
+                readBuffer.get(receiveBytes);
 
-        // Clear the receive buffer to be reused again.
-        readBuffer.clear();
+                // Convert byte array into a string.
+                String dataString = new String(receiveBytes);
 
-        // Notify the listeners.
-        for (var listener : _listeners) listener.DataReceived(this, dataString);
+                // Clear the receive buffer to be reused again.
+                readBuffer.clear();
+
+                // Notify the listeners.
+                for (var listener : _listeners) listener.DataReceived(this, dataString);
+            }
+        });
     }
 }

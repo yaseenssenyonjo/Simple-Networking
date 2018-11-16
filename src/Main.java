@@ -12,11 +12,11 @@ public class Main
 {
     public static void main(String[] args) throws IOException
     {
-        EchoServer.CreateTcpServer(1000);
-        ConnectTcpClient("127.0.0.1", 1000);
+        //EchoServer.CreateTcpServer(1000);
+        //ConnectTcpClient("127.0.0.1", 1000);
 
-        // EchoServer.CreateUdpServer(1000);
-        // ConnectUdpClient("127.0.0.1", 1001);
+        //EchoServer.CreateUdpServer(1001);
+        ConnectUdpClient("127.0.0.1", 1001);
 
         while (true)
         {

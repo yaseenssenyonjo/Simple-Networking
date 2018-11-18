@@ -1,21 +1,18 @@
 # Simple Networking
 Simple Networking is a Java library that **simplifies asynchronous networking** by abstracting the default libraries.
 
-## TODO
- * Add UDP support in terms of the tcpServer and client.
-
 ## Usage
-### Creating a simple TCP echo tcpServer.
+### Creating a simple TCP echo server.
 ```java
 import net.tcp.TcpClient;
 import net.tcp.TcpServer;
-import net.traits.ITcpServerListener;
+import net.traits.IServerListener;
 
 int port = 1000;
 
 TcpServer tcpServer = new TcpServer(port);
         
-tcpServer.AddListener(new ITcpServerListener()
+tcpServer.AddListener(new IServerListener<>()
 {
     @Override
     public void ConnectionEstablished(TcpClient client)
@@ -49,14 +46,14 @@ tcpServer.Start();
 ### Creating a simple TCP echo client.
 ```java
 import net.tcp.TcpClient;
-import net.traits.ITcpClientListener;
+import net.traits.IClientListener;
 
 String host = "127.0.0.1";
 int port = 1000;
 
 TcpClient client = new TcpClient();
 
-client.AddListener(new ITcpClientListener()
+client.AddListener(new IClientListener<>()
 {
     @Override
     public void ConnectionEstablished()
@@ -68,6 +65,48 @@ client.AddListener(new ITcpClientListener()
     public void DataReceived(TcpClient client, String data)
     {
         System.out.printf("The tcpServer has sent data! - '%s'\n", data);
+        client.Write(data); // Echo the data received.
+    }
+
+    @Override
+    public void Disconnected()
+    {
+        System.out.println("We are no longer connected.");
+    }
+
+    @Override
+    public void Error(String message)
+    {
+        System.out.println(message);
+    }
+});
+
+client.Connect(host, port);
+```
+
+### Creating a simple UDP echo client.
+
+```java
+import net.tcp.UdpClient;
+import net.traits.IClientListener;
+
+String host = "127.0.0.1";
+int port = 1001;
+
+UdpClient client = new UdpClient();
+
+client.AddListener(new IClientListener<>()
+{
+    @Override
+    public void ConnectionEstablished()
+    {
+        client.Write("Hello World");
+    }
+
+    @Override
+    public void DataReceived(UdpClient client, String data)
+    {
+        System.out.printf("The server has sent data! - '%s'\n", data);
         client.Write(data); // Echo the data received.
     }
 

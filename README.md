@@ -1,5 +1,5 @@
 # Simple Networking
-Simple Networking is a Java library that **simplifies asynchronous networking** by abstracting the default libraries.
+A library that simplifies asynchronous networking in Java.
 
 ## Usage
 ### Creating a simple TCP echo server.
